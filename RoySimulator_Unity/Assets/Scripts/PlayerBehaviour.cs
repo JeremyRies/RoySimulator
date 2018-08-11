@@ -26,17 +26,28 @@ public class PlayerBehaviour : MonoBehaviour
 	[SerializeField] private Text _debugStateText;
 	
 	private float _speed;
-	private PlayerStates _state = PlayerStates.Moving;
+	
 
 	[SerializeField] private Dictionary<PlayerStates,float> _durationForState;
 	private Dictionary<PlayerStates,float> _currentTimeInState = new Dictionary<PlayerStates, float>();
 	
+	private PlayerStates _state = PlayerStates.Moving;
+	private PlayerStates State
+	{
+		get { return _state;}
+		set
+		{
+			_currentTimeInState[_state] = 0;
+			_state = value;
+		}
+	}
+	
 	void Update ()
 	{
-		_debugStateText.text = _state.ToString();
-//		_currentTimeInState[_state] += Time.deltaTime;
+		_debugStateText.text = State.ToString();
+		_currentTimeInState[_state] += Time.deltaTime;
 			
-		switch (_state)
+		switch (State)
 		{
 			case PlayerStates.Spawning:
 				HandleSpawning();
@@ -48,6 +59,7 @@ public class PlayerBehaviour : MonoBehaviour
 				HandleFalling();
 				break;
 			case PlayerStates.OnGround:
+				HandleOnGround();
 				break;
 			case PlayerStates.StandingUp:
 				break;
@@ -57,18 +69,26 @@ public class PlayerBehaviour : MonoBehaviour
 		
 	}
 
-	private PlayerStates State { get; }
-	
+	private void HandleOnGround()
+	{
+		if (_currentTimeInState[PlayerStates.OnGround] > _durationForState[PlayerStates.OnGround])
+		{
+			State = PlayerStates.Moving;
+		}
+	}
 
 	private void HandleSpawning()
 	{
 		//todo play falling animation
-		_state = PlayerStates.Moving;
+		State = PlayerStates.Moving;
 	}
 
 	private void HandleFalling()
 	{
-		//todo play falling animation
+		if (_currentTimeInState[PlayerStates.Falling] > _durationForState[PlayerStates.Falling])
+		{
+			State = PlayerStates.OnGround;
+		}
 	}
 
 	private void HandleMoving()
@@ -82,7 +102,7 @@ public class PlayerBehaviour : MonoBehaviour
 
 		if (_speed > _criticalFallingSpeed)
 		{
-			_state = PlayerStates.Falling;
+			State = PlayerStates.Falling;
 		}
 	}
 }
